@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Draft Day — The Dynasty Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --tcl: #1a7a32;
+    --tdl: #2b6cb0;
+    --tsl: #c0155e;
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface2: #1a1a1a;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f0;
+    --muted: #888;
+    --font-display: 'Bebas Neue', sans-serif;
+    --font-body: 'Barlow', sans-serif;
+    --font-cond: 'Barlow Condensed', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-body); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    background: rgba(10,10,10,0.95); backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 64px;
+  }
+  .nav-logo { font-family: var(--font-display); font-size: 1.8rem; letter-spacing: 2px; color: var(--text); text-decoration: none; }
+  .nav-logo span { color: #ccc; font-size: 0.9rem; font-family: var(--font-cond); display: block; letter-spacing: 4px; margin-top: -4px; }
+  .nav-right { display: flex; align-items: center; gap: 1rem; }
+  .back-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font-cond); font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase;
+    padding: 0.4rem 0.9rem; border-radius: 4px; cursor: pointer; text-decoration: none;
+    transition: all 0.2s;
+  }
+  .back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .live-indicator { display: flex; align-items: center; gap: 6px; }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #e53e3e; animation: pulse 1.2s ease infinite; }
+  .live-dot.idle { background: var(--muted); animation: none; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .live-text { font-family: var(--font-cond); font-size: 0.85rem; letter-spacing: 2px; text-transform: uppercase; color: #e53e3e; }
+  .live-text.idle { color: var(--muted); }
+
+  /* TICKER */
+  .ticker-wrap {
+    position: fixed; top: 64px; left: 0; right: 0; z-index: 90;
+    background: #0d0d0d; border-bottom: 1px solid var(--border);
+    overflow: hidden; height: 44px; display: flex; align-items: center;
+  }
+  .ticker-label {
+    flex-shrink: 0; padding: 0 1rem; font-family: var(--font-display);
+    font-size: 0.85rem; letter-spacing: 2px; color: var(--muted);
+    border-right: 1px solid var(--border); height: 100%;
+    display: flex; align-items: center;
+  }
+  .ticker-scroller { overflow: hidden; flex: 1; height: 100%; }
+  .ticker-inner { display: flex; width: max-content; height: 100%; align-items: center; }
+  .ticker-inner.animate { animation: ticker-scroll 120s linear infinite; }
+  .ticker-inner.animate:hover { animation-play-state: paused; }
+  @keyframes ticker-scroll { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+  .tick-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 20px; border-right: 1px solid var(--border);
+    height: 44px; white-space: nowrap;
+  }
+  .tick-league-logo { width: 22px; height: 22px; object-fit: contain; mix-blend-mode: screen; flex-shrink: 0; }
+  .tick-conf-logo { width: 16px; height: 16px; object-fit: contain; mix-blend-mode: screen; flex-shrink: 0; }
+  .tick-pick-num { font-family: var(--font-display); font-size: 1rem; letter-spacing: 1px; color: var(--text); }
+  .tick-player { font-family: var(--font-cond); font-size: 0.9rem; font-weight: 600; color: var(--text); }
+  .tick-team { font-family: var(--font-cond); font-size: 0.8rem; color: var(--muted); }
+  .tick-pos { font-size: 0.7rem; letter-spacing: 1px; padding: 1px 5px; border-radius: 3px; font-family: var(--font-cond); }
+  .tick-new { font-size: 0.65rem; background: #e53e3e; color: white; padding: 1px 5px; border-radius: 2px; letter-spacing: 1px; font-family: var(--font-cond); text-transform: uppercase; }
+  .tick-dot { color: var(--border); }
+
+  /* MAIN */
+  main { padding-top: 120px; max-width: 1200px; margin: 0 auto; padding-left: 1.5rem; padding-right: 1.5rem; padding-bottom: 4rem; }
+
+  /* HEADER */
+  .draft-header { margin-bottom: 2rem; }
+  .draft-header h1 { font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 4rem); letter-spacing: 3px; line-height: 1; }
+  .draft-header p { color: var(--muted); font-family: var(--font-cond); letter-spacing: 2px; text-transform: uppercase; font-size: 0.9rem; margin-top: 0.5rem; }
+
+  /* TABS */
+  .tabs { display: flex; gap: 0.4rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .tab-btn {
+    display: flex; align-items: center; gap: 0.5rem;
+    background: var(--surface); border: 1px solid var(--border);
+    color: var(--muted); font-family: var(--font-cond); font-size: 0.85rem;
+    letter-spacing: 1.5px; text-transform: uppercase; padding: 0.5rem 1rem;
+    border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .tab-btn img { width: 20px; height: 20px; object-fit: contain; mix-blend-mode: screen; }
+  .tab-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .tab-btn.active { color: var(--text); border-color: rgba(255,255,255,0.3); background: var(--surface2); }
+  .tab-btn.active.tcl { border-color: var(--tcl); color: var(--tcl); }
+  .tab-btn.active.tdl { border-color: var(--tdl); color: var(--tdl); }
+  .tab-btn.active.tsl { border-color: var(--tsl); color: var(--tsl); }
+
+  /* ROUND FILTERS */
+  .round-filters { display: flex; gap: 0.35rem; margin-bottom: 1.5rem; flex-wrap: wrap; align-items: center; }
+  .round-label { font-family: var(--font-cond); font-size: 0.75rem; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-right: 0.25rem; }
+  .round-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font-cond); font-size: 0.8rem; letter-spacing: 1px;
+    padding: 0.3rem 0.7rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+  }
+  .round-btn:hover { color: var(--text); }
+  .round-btn.active { background: var(--surface2); color: var(--text); border-color: rgba(255,255,255,0.25); }
+
+  /* PICKS GRID */
+  .picks-grid { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  /* PICK CARD */
+  .pick-card {
+    display: flex; align-items: center; gap: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; transition: border-color 0.2s;
+  }
+  .pick-card:hover { border-color: rgba(255,255,255,0.15); }
+  .pick-card.new-pick { border-color: #e53e3e44; }
+
+  /* League color strip + logo */
+  .pick-league-strip {
+    width: 52px; flex-shrink: 0; align-self: stretch;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 6px; padding: 0.75rem 0.5rem; position: relative;
+  }
+  .pick-league-strip::after {
+    content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+    width: 3px; background: var(--strip-color);
+  }
+  .pick-league-logo { width: 30px; height: 30px; object-fit: contain; mix-blend-mode: screen; }
+  .pick-league-abbr { font-family: var(--font-display); font-size: 0.65rem; letter-spacing: 1px; color: var(--strip-color); }
+
+  /* Pick number */
+  .pick-number-wrap {
+    width: 90px; flex-shrink: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 0.75rem 0.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .pick-round { font-family: var(--font-cond); font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+  .pick-number { font-family: var(--font-display); font-size: 2.8rem; letter-spacing: 2px; line-height: 1; color: var(--text); }
+  .pick-overall { font-family: var(--font-cond); font-size: 0.65rem; letter-spacing: 1px; color: var(--muted); }
+
+  /* Conference logo */
+  .pick-conf-wrap {
+    width: 52px; flex-shrink: 0; display: flex; align-items: center;
+    justify-content: center; padding: 0.75rem 0.5rem; border-right: 1px solid var(--border);
+  }
+  .pick-conf-logo { width: 32px; height: 32px; object-fit: contain; mix-blend-mode: screen; }
+
+  /* Player info */
+  .pick-info { flex: 1; padding: 0.85rem 1rem; min-width: 0; }
+  .pick-player-name { font-family: var(--font-display); font-size: 1.6rem; letter-spacing: 1.5px; line-height: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pick-pos-badge {
+    display: inline-block; font-family: var(--font-cond); font-size: 0.7rem;
+    letter-spacing: 1.5px; padding: 1px 6px; border-radius: 3px; margin-left: 6px;
+    vertical-align: middle; position: relative; top: -2px;
+  }
+  .pick-meta { font-family: var(--font-cond); font-size: 0.85rem; color: var(--muted); margin-top: 3px; letter-spacing: 0.5px; }
+  .pick-new-badge { font-family: var(--font-cond); font-size: 0.65rem; background: #e53e3e; color: white; padding: 1px 6px; border-radius: 2px; letter-spacing: 1.5px; text-transform: uppercase; margin-left: 6px; vertical-align: middle; }
+
+  /* Team */
+  .pick-team-wrap { padding: 0.85rem 1rem; text-align: right; min-width: 140px; flex-shrink: 0; }
+  .pick-team-name { font-family: var(--font-cond); font-size: 0.9rem; color: var(--muted); letter-spacing: 0.5px; }
+  .pick-owner { font-family: var(--font-cond); font-size: 0.75rem; color: rgba(255,255,255,0.3); margin-top: 2px; }
+
+  /* ROUND DIVIDER */
+  .round-divider {
+    display: flex; align-items: center; gap: 1rem; padding: 0.5rem 0; margin: 0.5rem 0;
+  }
+  .round-divider-label { font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 3px; color: var(--muted); white-space: nowrap; }
+  .round-divider-line { flex: 1; height: 1px; background: var(--border); }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 5rem 2rem; color: var(--muted); }
+  .empty-state h2 { font-family: var(--font-display); font-size: 2rem; letter-spacing: 3px; margin-bottom: 0.5rem; }
+  .empty-state p { font-family: var(--font-cond); letter-spacing: 1px; text-transform: uppercase; font-size: 0.85rem; }
+
+  /* REFRESH */
+  .refresh-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .last-updated { font-family: var(--font-cond); font-size: 0.75rem; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; }
+  .refresh-btn {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font-cond); font-size: 0.75rem; letter-spacing: 1px;
+    text-transform: uppercase; padding: 0.3rem 0.75rem; border-radius: 4px; cursor: pointer; transition: all 0.2s;
+  }
+  .refresh-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+
+  .year-btn {
+    background: var(--surface); border: 1px solid var(--border); color: var(--muted);
+    font-family: var(--font-display); font-size: 1.1rem; letter-spacing: 2px;
+    padding: 0.4rem 1rem; border-radius: 6px; cursor: pointer; transition: all 0.2s;
+  }
+  .year-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+  .year-btn.active { color: var(--text); border-color: rgba(255,255,255,0.4); background: var(--surface2); }
+  .year-btn.prev { color: var(--muted); }
+  @media (max-width: 640px) {
+    .pick-team-wrap { display: none; }
+    .pick-number { font-size: 2rem; }
+    .pick-number-wrap { width: 70px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="https://dynasty-leagues.com" class="nav-logo">
+    THE DYNASTY HUB
+    <span>FANTASY SPORTS NETWORK</span>
+  </a>
+  <div class="nav-right">
+    <div class="live-indicator">
+      <div class="live-dot idle" id="live-dot"></div>
+      <span class="live-text idle" id="live-text">Loading...</span>
+    </div>
+    <a href="https://dynasty-leagues.com" class="back-btn">← Main Site</a>
+  </div>
+</nav>
+
+<div class="ticker-wrap">
+  <div class="ticker-label">LIVE PICKS</div>
+  <div class="ticker-scroller">
+    <div class="ticker-inner" id="ticker-inner">
+      <div class="tick-item" style="color:var(--muted);font-family:var(--font-cond);font-size:0.8rem;letter-spacing:1px;">Waiting for picks...</div>
+    </div>
+  </div>
+</div>
+
+<main>
+  <div class="draft-header">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:0.5rem;">
+      <h1>DRAFT DAY</h1>
+      <div id="year-selector" style="display:flex;gap:0.4rem;"></div>
+    </div>
+    <p id="draft-subtitle">Loading draft data...</p>
+  </div>
+
+  <div class="tabs" id="league-tabs">
+    <button class="tab-btn active" onclick="setLeague('all', this)">All Leagues</button>
+    <button class="tab-btn tcl" onclick="setLeague('tcl', this)">
+      <img src="../TCL_Icon.png" alt="TCL"/> TCL
+    </button>
+    <button class="tab-btn tdl" onclick="setLeague('tdl', this)">
+      <img src="../TDL_Icon.png" alt="TDL"/> TDL
+    </button>
+    <button class="tab-btn tsl" onclick="setLeague('tsl', this)">
+      <img src="../TSL_Icon.png" alt="TSL"/> TSL
+    </button>
+  </div>
+
+  <div class="round-filters" id="round-filters">
+    <span class="round-label">Round:</span>
+    <button class="round-btn active" onclick="setRound('all', this)">All</button>
+  </div>
+
+  <div class="refresh-bar">
+    <span class="last-updated" id="last-updated">—</span>
+    <button class="refresh-btn" onclick="fetchAllDrafts()">↻ Refresh</button>
+  </div>
+
+  <div class="picks-grid" id="picks-grid">
+    <div class="empty-state">
+      <h2>Standby</h2>
+      <p>Draft picks will appear here as they happen</p>
+    </div>
+  </div>
+</main>
+
+<script>
+const LEAGUES = {
+  tcl: { id: '54478', label: 'TCL', color: '#1a7a32', logo: '../TCL_Icon.png' },
+  tdl: { id: '39125', label: 'TDL', color: '#2b6cb0', logo: '../TDL_Icon.png' },
+  tsl: { id: '65694', label: 'TSL', color: '#c0155e', logo: '../TSL_Icon.png' },
+};
+const CONF_LOGOS = { AFC: '../afc-logo.png', NFC: '../NFC-Logo.png' };
+const POS_COLORS = {
+  QB:'#e53e3e', RB:'#2b6cb0', WR:'#1a7a32', TE:'#d97706',
+  K:'#8a8a8a', DEF:'#8a8a8a', DL:'#7b2d8b', LB:'#7b2d8b', DB:'#7b2d8b', default:'#555'
+};
+
+function getCurrentMFLYear() {
+  const now = new Date();
+  return now.getMonth() >= 2 ? now.getFullYear() : now.getFullYear() - 1;
+}
+
+let allPicks = [];
+let currentLeague = 'all';
+let currentRound = 'all';
+let knownPickIds = new Set();
+let isLive = false;
+let pollInterval = null;
+let viewingYear = getCurrentMFLYear();
+let isViewingCurrent = true;
+
+function buildYearSelector() {
+  const currentYear = getCurrentMFLYear();
+  const prevYear = currentYear - 1;
+  const wrap = document.getElementById('year-selector');
+  wrap.innerHTML = `
+    <button class="year-btn active" id="yr-current" onclick="switchYear(${currentYear}, true)">${currentYear}</button>
+    <button class="year-btn prev" id="yr-prev" onclick="switchYear(${prevYear}, false)">${prevYear}</button>
+  `;
+}
+
+function switchYear(year, isCurrent) {
+  if (viewingYear === year) return;
+  viewingYear = year;
+  isViewingCurrent = isCurrent;
+
+  document.getElementById('yr-current').classList.toggle('active', isCurrent);
+  document.getElementById('yr-prev').classList.toggle('active', !isCurrent);
+
+  // Reset round filters (keep All button only)
+  const rf = document.getElementById('round-filters');
+  [...rf.querySelectorAll('.round-btn')].slice(1).forEach(b => b.remove());
+  document.querySelector('.round-btn').classList.add('active');
+  currentRound = 'all';
+
+  // Stop polling if viewing previous year
+  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
+  if (isCurrent) { pollInterval = setInterval(fetchAllDrafts, 45000); }
+
+  // Reset new-pick tracking for year switches
+  knownPickIds = new Set();
+  fetchAllDrafts();
+}
+
+// Cache player names and franchise names per league+year
+const playerCache = {};
+const franchiseCache = {};
+
+async function proxyFetch(leagueId, year, type) {
+  const url = `https://zwprcshjvjgvaapyfmba.supabase.co/functions/v1/mfl-proxy?leagueId=${leagueId}&year=${year}&type=${type}`;
+  const res = await fetch(url, { headers: { 'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3cHJjc2hqdmpndmFhcHlmbWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA0MjgsImV4cCI6MjA5MTQxNjQyOH0.giYegXooD5Jv57wdHHsy1jAJmDPY-NE9Fa87WeCmSXk' } });
+  if (!res.ok) return null;
+  return await res.json();
+}
+
+async function loadPlayers(leagueKey, year) {
+  const cacheKey = `${leagueKey}-${year}`;
+  if (playerCache[cacheKey]) return playerCache[cacheKey];
+  const league = LEAGUES[leagueKey];
+  try {
+    const data = await proxyFetch(league.id, year, 'players');
+    const players = data?.players?.player || [];
+    const map = {};
+    (Array.isArray(players) ? players : [players]).forEach(p => {
+      map[p.id] = { name: `${p.name}`, pos: p.position || '—', nflTeam: p.team || '' };
+    });
+    playerCache[cacheKey] = map;
+    return map;
+  } catch(e) { return {}; }
+}
+
+async function loadFranchises(leagueKey, year) {
+  const cacheKey = `${leagueKey}-${year}`;
+  if (franchiseCache[cacheKey]) return franchiseCache[cacheKey];
+  const league = LEAGUES[leagueKey];
+  try {
+    const data = await proxyFetch(league.id, year, 'league');
+    console.log('League data sample:', JSON.stringify(data?.league?.conferences || data?.league?.divisions || {}).substring(0, 400));
+    const map = {};
+
+    // MFL conferences endpoint returns franchise lists directly
+    // Try TYPE=conferences for direct franchise->conference mapping
+    let confData = null;
+    try {
+      confData = await proxyFetch(league.id, year, 'conferences');
+    } catch(e) {}
+
+    const franchiseToConf = {};
+    if (confData?.conferences?.conference) {
+      const confs = confData.conferences.conference;
+      (Array.isArray(confs) ? confs : [confs]).forEach(c => {
+        const confName = c.name?.includes('AFC') ? 'AFC' : c.name?.includes('NFC') ? 'NFC' : '';
+        const fids = c.franchise_id || c.franchiseId || '';
+        String(fids).split(',').forEach(fid => {
+          if (fid.trim()) franchiseToConf[fid.trim()] = confName;
+        });
+      });
+    }
+    console.log('franchiseToConf sample:', JSON.stringify(Object.entries(franchiseToConf).slice(0,6)));
+
+    // Build franchise map
+    const franchises = data?.league?.franchises?.franchise || [];
+    (Array.isArray(franchises) ? franchises : [franchises]).forEach(f => {
+      // Try conferences endpoint first, then fall back to division field parity check
+      const conf = franchiseToConf[f.id] || '';
+      map[f.id] = { name: f.name || f.id, conf, divId: f.division };
+    });
+
+    // If conferences endpoint didnt work, split franchises by division ID parity
+    // Lower division IDs (00,01,02,03) = AFC, higher (04,05,06,07) = NFC (common MFL pattern)
+    if (Object.values(map).every(f => !f.conf)) {
+      const divIds = [...new Set(Object.values(map).map(f => f.divId).filter(Boolean))].sort();
+      const half = Math.ceil(divIds.length / 2);
+      const afcDivs = new Set(divIds.slice(0, half));
+      Object.values(map).forEach(f => {
+        f.conf = afcDivs.has(f.divId) ? 'AFC' : 'NFC';
+      });
+    }
+
+    console.log('Franchise map sample:', JSON.stringify(Object.entries(map).slice(0,4)));
+    franchiseCache[cacheKey] = map;
+    return map;
+  } catch(e) { console.warn('loadFranchises failed:', e); return {}; }
+}
+
+async function fetchDraftForLeague(leagueKey) {
+  const league = LEAGUES[leagueKey];
+  try {
+    // Fetch draft results, players, and franchises in parallel
+    const [draftData, playerMap, franchiseMap] = await Promise.all([
+      proxyFetch(league.id, viewingYear, 'draftResults'),
+      loadPlayers(leagueKey, viewingYear),
+      loadFranchises(leagueKey, viewingYear),
+    ]);
+
+    if (!draftData) return [];
+    const draftUnit = draftData?.draftResults?.draftUnit;
+    let rawPicks = [];
+    if (Array.isArray(draftUnit)) {
+      rawPicks = draftUnit.flatMap(u => Array.isArray(u.draftPick) ? u.draftPick : []);
+    } else if (draftUnit?.draftPick) {
+      rawPicks = Array.isArray(draftUnit.draftPick) ? draftUnit.draftPick : [draftUnit.draftPick];
+    }
+
+    // Filter out empty picks (no player assigned = draft hasn't happened)
+    const madePicks = rawPicks.filter(p => p.player && p.player !== '' && p.timestamp && p.timestamp !== '');
+
+    return madePicks.map(p => {
+      const playerInfo = playerMap[p.player] || {};
+      const franchiseInfo = franchiseMap[p.franchise] || {};
+      return {
+        id: `${leagueKey}-${viewingYear}-${p.round}-${p.pick}-${p.franchise}`,
+        leagueKey,
+        round: parseInt(p.round),
+        pick: parseInt(p.pick),
+        overall: parseInt(p.overall || 0),
+        player: playerInfo.name || p.playerName || `Player ${p.player}`,
+        pos: playerInfo.pos || p.pos || '—',
+        nflTeam: playerInfo.nflTeam || p.nflTeam || '',
+        franchise: franchiseInfo.name || `Franchise ${p.franchise}`,
+        conf: franchiseInfo.conf || '',
+        timestamp: parseInt(p.timestamp || 0),
+      };
+    });
+  } catch(e) {
+    console.warn(`Fetch failed for ${leagueKey}:`, e.message);
+    return [];
+  }
+}
+
+async function fetchAllDrafts() {
+  document.getElementById('last-updated').textContent = 'Loading...';
+  const results = await Promise.all(Object.keys(LEAGUES).map(fetchDraftForLeague));
+  // Sort by round then pick number (not timestamp) for clean ordering
+  const fresh = results.flat().sort((a,b) => a.round - b.round || a.pick - b.pick);
+
+  if (isViewingCurrent) {
+    const newIds = new Set(fresh.map(p => p.id));
+    fresh.forEach(p => { p.isNew = !knownPickIds.has(p.id); });
+    knownPickIds = newIds;
+  } else {
+    fresh.forEach(p => { p.isNew = false; });
+  }
+
+  allPicks = fresh;
+  const madePicks = fresh.filter(p => p.player && !p.player.startsWith('Player '));
+  isLive = isViewingCurrent && madePicks.length > 0;
+
+  updateLiveIndicator();
+  updateRoundFilters();
+  renderPicks();
+  updateTicker();
+  document.getElementById('last-updated').textContent =
+    isViewingCurrent ? 'Updated ' + new Date().toLocaleTimeString() : `${viewingYear} Season Archive`;
+  document.getElementById('draft-subtitle').textContent =
+    `${viewingYear} Season · ${madePicks.length} picks across all leagues${!isViewingCurrent ? ' · Archive' : ''}`;
+}
+
+function updateLiveIndicator() {
+  const dot = document.getElementById('live-dot');
+  const txt = document.getElementById('live-text');
+  if (!isViewingCurrent) {
+    dot.classList.add('idle'); txt.classList.add('idle');
+    txt.textContent = `${viewingYear} Archive`;
+  } else if (isLive) {
+    dot.classList.remove('idle'); txt.classList.remove('idle');
+    txt.textContent = 'Draft Live';
+  } else {
+    dot.classList.add('idle'); txt.classList.add('idle');
+    txt.textContent = allPicks.length > 0 ? 'Draft Complete' : 'No Draft Active';
+  }
+}
+
+function updateRoundFilters() {
+  const rounds = [...new Set(allPicks.map(p => p.round))].sort((a,b) => a-b);
+  const wrap = document.getElementById('round-filters');
+  const existingRounds = new Set([...wrap.querySelectorAll('.round-btn')].slice(1).map(b => b.dataset.round));
+  rounds.forEach(r => {
+    if (!existingRounds.has(String(r))) {
+      const btn = document.createElement('button');
+      btn.className = 'round-btn';
+      btn.dataset.round = r;
+      btn.textContent = `Round ${r}`;
+      btn.onclick = () => setRound(r, btn);
+      wrap.appendChild(btn);
+    }
+  });
+}
+
+function setLeague(key, el) {
+  currentLeague = key;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderPicks();
+}
+
+function setRound(r, el) {
+  currentRound = r;
+  document.querySelectorAll('.round-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderPicks();
+}
+
+function renderPicks() {
+  const grid = document.getElementById('picks-grid');
+  let filtered = allPicks;
+  if (currentLeague !== 'all') filtered = filtered.filter(p => p.leagueKey === currentLeague);
+  if (currentRound !== 'all') filtered = filtered.filter(p => p.round === parseInt(currentRound));
+  if (!filtered.length) {
+    grid.innerHTML = `<div class="empty-state"><h2>${isViewingCurrent ? 'No Picks Yet' : 'No Data'}</h2><p>${isViewingCurrent ? 'Picks will appear here as the draft progresses' : 'No draft data found for ' + viewingYear}</p></div>`;
+    return;
+  }
+  const rounds = [...new Set(filtered.map(p => p.round))].sort((a,b) => a-b);
+  let html = '';
+  for (const r of rounds) {
+    const rPicks = filtered.filter(p => p.round === r);
+    html += `<div class="round-divider"><div class="round-divider-line"></div><div class="round-divider-label">ROUND ${r}</div><div class="round-divider-line"></div></div>`;
+    html += rPicks.map(p => buildPickCard(p)).join('');
+  }
+  grid.innerHTML = html;
+}
+
+function buildPickCard(p) {
+  const league = LEAGUES[p.leagueKey];
+  const posColor = POS_COLORS[p.pos] || POS_COLORS.default;
+  const confLogo = CONF_LOGOS[p.conf] || '';
+  return `
+    <div class="pick-card ${p.isNew ? 'new-pick' : ''}">
+      <div class="pick-league-strip" style="--strip-color:${league.color};background:${league.color}11;">
+        <img src="${league.logo}" alt="${league.label}" class="pick-league-logo"/>
+        <span class="pick-league-abbr">${league.label}</span>
+      </div>
+      <div class="pick-number-wrap">
+        <span class="pick-round">Round ${p.round}</span>
+        <span class="pick-number">${p.pick}</span>
+        ${p.overall ? `<span class="pick-overall">Pick ${p.overall} overall</span>` : ''}
+      </div>
+      <div class="pick-conf-wrap">
+        ${confLogo ? `<img src="${confLogo}" alt="${p.conf}" class="pick-conf-logo"/>` : `<span style="font-family:var(--font-cond);font-size:0.75rem;color:var(--muted);">${p.conf}</span>`}
+      </div>
+      <div class="pick-info">
+        <div class="pick-player-name">
+          ${p.player}
+          <span class="pick-pos-badge" style="background:${posColor}22;color:${posColor};border:1px solid ${posColor}44;">${p.pos}</span>
+          ${p.isNew ? `<span class="pick-new-badge">New</span>` : ''}
+        </div>
+        <div class="pick-meta">${p.nflTeam || '—'}</div>
+      </div>
+      <div class="pick-team-wrap">
+        <div class="pick-team-name">${p.franchise}</div>
+        <div style="font-family:var(--font-cond);font-size:0.7rem;color:rgba(255,255,255,0.25);margin-top:2px;">${p.conf} Conf</div>
+      </div>
+    </div>`;
+}
+
+function updateTicker() {
+  const ticker = document.getElementById('ticker-inner');
+  if (!allPicks.length) return;
+  const recent = [...allPicks].sort((a,b) => b.timestamp - a.timestamp).slice(0, 40);
+  const items = [...recent, ...recent].map(p => {
+    const league = LEAGUES[p.leagueKey];
+    const confLogo = CONF_LOGOS[p.conf] || '';
+    return `<div class="tick-item">
+      <img src="${league.logo}" alt="${league.label}" class="tick-league-logo"/>
+      ${confLogo ? `<img src="${confLogo}" alt="${p.conf}" class="tick-conf-logo"/>` : ''}
+      <span class="tick-pick-num" style="color:${league.color};">R${p.round}.${p.pick}</span>
+      <span class="tick-player">${p.player}</span>
+      <span class="tick-pos" style="background:${(POS_COLORS[p.pos]||'#555')}22;color:${(POS_COLORS[p.pos]||'#555')};border:1px solid ${(POS_COLORS[p.pos]||'#555')}44;">${p.pos}</span>
+      <span class="tick-team">${p.franchise}</span>
+      ${p.isNew ? `<span class="tick-new">New</span>` : ''}
+    </div>`;
+  }).join('');
+  ticker.innerHTML = items;
+  ticker.classList.add('animate');
+}
+
+buildYearSelector();
+fetchAllDrafts();
+pollInterval = setInterval(fetchAllDrafts, 45000);
+
+// Log page visit to admin_logins via Supabase REST
+async function logDraftVisit() {
+  try {
+    const SUPABASE_URL = 'https://zwprcshjvjgvaapyfmba.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp3cHJjc2hqdmpndmFhcHlmbWJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU4NDA0MjgsImV4cCI6MjA5MTQxNjQyOH0.giYegXooD5Jv57wdHHsy1jAJmDPY-NE9Fa87WeCmSXk';
+    // Get existing session from Supabase storage
+    const sessionKey = Object.keys(localStorage).find(k => k.includes('supabase') && k.includes('session'));
+    if (!sessionKey) return;
+    const sessionData = JSON.parse(localStorage.getItem(sessionKey) || '{}');
+    const u = sessionData?.user;
+    if (!u) return;
+    const name = u.user_metadata?.full_name || u.user_metadata?.name || u.user_metadata?.global_name || 'Unknown';
+    const avatar = u.user_metadata?.avatar_url || '';
+    await fetch(`${SUPABASE_URL}/rest/v1/admin_logins`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ discord_name: name, avatar_url: avatar, user_id: u.id, page: 'Draft Day' })
+    });
+  } catch(e) {}
+}
+logDraftVisit();
+</script>
+</body>
+</html>
